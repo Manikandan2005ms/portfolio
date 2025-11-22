@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manikandan | Futuristic Portfolio</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        neon: {
+                            blue: '#00f3ff',
+                            purple: '#bc13fe',
+                            cyan: '#0afff0',
+                        },
+                        dark: {
+                            bg: '#030712',
+                            card: 'rgba(255, 255, 255, 0.03)',
+                        }
+                    },
+                    animation: {
+                        'blob': 'blob 10s infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* --- Core Aesthetic & Reset --- */
+        body {
+            background-color: #030712;
+            color: #e2e8f0;
+            overflow-x: hidden;
+            cursor: none; /* Custom cursor handling */
+        }
+
+        /* --- Noise Overlay --- */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* --- Ambient Blobs --- */
+        .blob-cont {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.4;
+            animation: blob 10s infinite alternate;
+        }
+
+        /* --- Glassmorphism Card System --- */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.1s ease, box-shadow 0.3s ease;
+            transform-style: preserve-3d;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Spotlight Effect Layer */
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.06), transparent 40%);
+            z-index: 2;
+            opacity: 0; 
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+        .glass-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Neon Borders on Hover */
+        .glass-card:hover {
+            border-color: rgba(0, 243, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+        }
+
+        /* --- Custom Cursor --- */
+        #cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00f3ff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s, background-color 0.3s, border-color 0.3s;
+            mix-blend-mode: difference;
+        }
+        #cursor.hovered {
+            width: 50px;
+            height: 50px;
+            background-color: rgba(0, 243, 255, 0.1);
+            border-color: transparent;
+        }
+        #cursor-dot {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 4px;
+            background-color: #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transform: translate(-50%, -50%);
+        }
+
+        /* --- Typography Utilities --- */
+        .text-gradient {
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .text-neon-blue {
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+            color: #00f3ff;
+        }
+        .text-neon-purple {
+            text-shadow: 0 0 10px rgba(188, 19, 254, 0.5);
+            color: #bc13fe;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #030712; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f3ff; 
+        }
+
+        /* Canvas Particle Layer */
+        #particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="selection:bg-neon-blue selection:text-black">
+
+    <!-- Custom Cursor Elements -->
+    <div id="cursor"></div>
+    <div id="cursor-dot"></div>
+
+    <!-- Visual Overlays -->
+    <div class="noise-overlay"></div>
+    <canvas id="particles"></canvas>
+    
+    <!-- Background Gradient Blobs -->
+    <div class="blob-cont">
+        <div class="blob bg-neon-purple w-96 h-96 top-0 left-0 -translate-x-1/2 -translate-y-1/2 blur-[120px]"></div>
+        <div class="blob bg-neon-blue w-80 h-80 bottom-0 right-0 translate-x-1/3 translate-y-1/3 blur-[100px]" style="animation-delay: -5s"></div>
+        <div class="blob bg-indigo-600 w-64 h-64 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 blur-[90px]" style="animation-delay: -2s"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-40 px-6 py-4 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto flex justify-between items-center glass-card rounded-full px-6 py-3">
+            <a href="#hero" class="text-xl font-display font-bold tracking-wider hover-trigger">
+                <span class="text-neon-blue">MANI</span>.DEV
+            </a>
+            <div class="hidden md:flex space-x-8">
+                <a href="#projects" class="text-sm uppercase tracking-widest hover:text-neon-blue transition-colors hover-trigger">Projects</a>
+                <a href="#skills" class="text-sm uppercase tracking-widest hover:text-neon-blue transition-colors hover-trigger">Skills</a>
+                <a href="#about" class="text-sm uppercase tracking-widest hover:text-neon-blue transition-colors hover-trigger">About</a>
+                <a href="#contact" class="text-sm uppercase tracking-widest hover:text-neon-blue transition-colors hover-trigger">Contact</a>
+            </div>
+            <a href="#contact" class="md:hidden text-white hover-trigger"><i class="fas fa-bars"></i></a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="relative z-10 pt-32 pb-20 px-6 max-w-7xl mx-auto space-y-32">
+
+        <!-- Hero Section -->
+        <section class="min-h-[80vh] flex flex-col-reverse md:flex-row items-center justify-between gap-12" id="hero">
+            <div class="flex-1 space-y-6 reveal-text">
+                <div class="inline-block px-3 py-1 rounded-full glass-card border border-neon-blue/30 text-neon-blue text-xs font-bold tracking-widest mb-2">
+                    AI • FULL-STACK • IOT • CLOUD
+                </div>
+                <h1 class="text-5xl md:text-7xl font-display font-bold leading-tight">
+                    Engineering<br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-neon-blue to-neon-purple">Futuristic</span><br>
+                    <span class="text-white">Experiences.</span>
+                </h1>
+                <p class="text-slate-400 text-lg md:text-xl max-w-lg leading-relaxed">
+                    I’m <span class="font-semibold">Manikandan</span>, a Full-Stack & AI developer crafting immersive products that connect
+                    <span class="text-neon-blue font-semibold">web</span>, <span class="text-neon-purple font-semibold">AI</span>, <span class="font-semibold">cloud</span> and <span class="font-semibold">IoT</span> into one seamless, futuristic experience.
+                </p>
+                <p class="text-[11px] md:text-xs uppercase tracking-[0.25em] text-neon-blue font-mono">
+                    Engineering the future, one line of code at a time.
+                </p>
+                <div class="flex gap-4 pt-4">
+                    <a href="#projects" class="hover-trigger relative group px-8 py-4 bg-white text-black font-bold rounded-lg overflow-hidden">
+                        <span class="relative z-10 group-hover:text-white transition-colors">View Projects</span>
+                        <div class="absolute inset-0 bg-neon-blue transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300 ease-out"></div>
+                    </a>
+                    <a href="assets\Manikandan M resume.pdf" class="hover-trigger px-8 py-4 glass-card rounded-lg font-bold text-white hover:bg-white/10 transition-colors flex items-center gap-2">
+                        <span>Download Resume</span>
+                        <i class="fas fa-download text-sm"></i>
+                    </a>
+                </div>
+                
+                <!-- Social Stats -->
+                <div class="flex gap-8 pt-8 border-t border-white/10 mt-8">
+                    <div>
+                        <h4 class="text-2xl font-bold font-display">2+</h4>
+                        <p class="text-xs text-slate-500 uppercase tracking-wider">Years Building</p>
+                    </div>
+                    <div>
+                        <h4 class="text-2xl font-bold font-display">10+</h4>
+                        <p class="text-xs text-slate-500 uppercase tracking-wider">Projects</p>
+                    </div>
+                    <div>
+                        <h4 class="text-2xl font-bold font-display">5+</h4>
+                        <p class="text-xs text-slate-500 uppercase tracking-wider">AI Builds</p>
+                    </div>
+                </div>
+
+                <!-- Hero Social Links -->
+                <div class="flex gap-4 pt-4">
+                    <a href="https://github.com/Manikandan2005ms" target="_blank" class="hover-trigger text-sm uppercase tracking-widest text-slate-400 hover:text-neon-blue transition-colors flex items-center gap-2">
+                        <i class="fab fa-github text-lg"></i>
+                        <span>@Manikandan2005ms</span>
+                    </a>
+                    <a href="https://www.linkedin.com/in/mani2005m/" target="_blank" class="hover-trigger text-sm uppercase tracking-widest text-slate-400 hover:text-neon-purple transition-colors flex items-center gap-2">
+                        <i class="fab fa-linkedin text-lg"></i>
+                        <span>LinkedIn</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Hero Image / 3D Element -->
+            <div class="flex-1 flex justify-center relative tilt-element" data-tilt-max="15" data-tilt-speed="1000" data-tilt-perspective="1000">
+                <div class="relative w-80 h-80 md:w-[500px] md:h-[500px]">
+                    <!-- Decorative Rings -->
+                    <div class="absolute inset-0 rounded-full border border-neon-blue/20 animate-[spin_10s_linear_infinite]"></div>
+                    <div class="absolute inset-4 rounded-full border border-neon-purple/20 animate-[spin_15s_linear_infinite_reverse]"></div>
+                    
+                    <!-- Image Container -->
+                    <div class="absolute inset-8 rounded-full overflow-hidden glass-card border-2 border-white/10 shadow-[0_0_50px_rgba(0,243,255,0.2)]">
+                        <!-- Replace this image with your profile photo -->
+                        <img src="assets\Gemini_Generated_Image_k9yrunk9yrunk9yr.png" alt="Manikandan Profile" class="w-full h-full object-cover opacity-90 hover:scale-110 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-dark-bg via-transparent to-transparent"></div>
+                    </div>
+
+                    <!-- Floating Badge -->
+                    <div class="absolute bottom-20 -left-4 glass-card px-4 py-2 rounded-lg flex items-center gap-3 animate-bounce">
+                        <div class="w-3 h-3 bg-green-500 rounded-full shadow-[0_0_10px_#22c55e]"></div>
+                        <span class="text-sm font-bold">Online</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tech Stack -->
+        <section id="skills">
+            <h2 class="text-3xl md:text-4xl font-display font-bold mb-12 flex items-center gap-4">
+                <span class="w-12 h-1 bg-neon-blue"></span> Skills & Tech Stack
+            </h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <!-- Skill Cards -->
+                <div class="glass-card p-6 rounded-xl flex flex-col items-center gap-4 tilt-card hover-trigger">
+                    <i class="fab fa-react text-4xl text-cyan-400"></i>
+                    <h3 class="font-bold text-center">Frontend<br>React / Modern UI</h3>
+                    <p class="text-xs text-slate-400 text-center">Single-page apps & responsive layouts.</p>
+                </div>
+                <div class="glass-card p-6 rounded-xl flex flex-col items-center gap-4 tilt-card hover-trigger">
+                    <i class="fab fa-js text-4xl text-yellow-400"></i>
+                    <h3 class="font-bold">JavaScript</h3>
+                    <p class="text-xs text-slate-400 text-center">Clean, modular, interactive logic.</p>
+                </div>
+                <div class="glass-card p-6 rounded-xl flex flex-col items-center gap-4 tilt-card hover-trigger">
+                    <i class="fab fa-python text-4xl text-blue-400"></i>
+                    <h3 class="font-bold text-center">Python<br>AI & Automation</h3>
+                    <p class="text-xs text-slate-400 text-center">LLM, CV, automation scripts.</p>
+                </div>
+                <div class="glass-card p-6 rounded-xl flex flex-col items-center gap-4 tilt-card hover-trigger">
+                    <i class="fas fa-code text-4xl text-purple-400"></i>
+                    <h3 class="font-bold text-center">Java</h3>
+                    <p class="text-xs text-slate-400 text-center">Core CS & problem solving.</p>
+                </div>
+                <div class="glass-card p-6 rounded-xl flex flex-col items-center gap-4 tilt-card hover-trigger">
+                    <i class="fab fa-figma text-4xl text-pink-400"></i>
+                    <h3 class="font-bold">UI / UX Design</h3>
+                    <p class="text-xs text-slate-400 text-center">Glassmorphism, bento layouts.</p>
+                </div>
+                <div class="glass-card p-6 rounded-xl flex flex-col items-center gap-4 tilt-card hover-trigger">
+                    <i class="fas fa-database text-4xl text-green-400"></i>
+                    <h3 class="font-bold text-center">MongoDB / SQL</h3>
+                    <p class="text-xs text-slate-400 text-center">data models.</p>
+                </div>
+                <div class="glass-card p-6 rounded-xl flex flex-col items-center gap-4 tilt-card hover-trigger">
+                    <i class="fab fa-docker text-4xl text-blue-600"></i>
+                    <h3 class="font-bold text-center">Cloud & DevOps</h3>
+                    <p class="text-xs text-slate-400 text-center">AWS, Docker, CI/CD basics.</p>
+                </div>
+                <div class="glass-card p-6 rounded-xl flex flex-col items-center gap-4 tilt-card hover-trigger">
+                    <i class="fas fa-magic text-4xl text-white"></i>
+                    <h3 class="font-bold text-center">GSAP & Motion</h3>
+                    <p class="text-xs text-slate-400 text-center">Smooth, physics-based UI motion.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Featured Projects (Bento Grid) -->
+        <section id="projects">
+            <h2 class="text-3xl md:text-4xl font-display font-bold mb-12 flex items-center gap-4">
+                <span class="w-12 h-1 bg-neon-purple"></span> Featured Projects
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 md:grid-rows-3 gap-6 h-auto md:h-[800px]">
+                
+                <!-- Project 1: Large Focus -->
+                <div class="md:col-span-2 md:row-span-2 glass-card rounded-2xl p-6 tilt-card hover-trigger group relative">
+                    <div class="absolute top-4 right-4 z-20 flex gap-2">
+                        <a href="https://github.com/Manikandan2005ms" target="_blank" class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center hover:bg-neon-blue hover:text-black transition-colors"><i class="fab fa-github"></i></a>
+                        <a href="#" target="_blank" class="w-10 h-10 rounded-full bg-black/50 flex items-center justify-center hover:bg-neon-purple hover:text-white transition-colors"><i class="fas fa-external-link-alt"></i></a>
+                    </div>
+                    <div class="h-full flex flex-col justify-end relative z-10">
+                        <h3 class="text-3xl font-bold mb-2 group-hover:text-neon-blue transition-colors">
+                            AI Smart Teaching Assistant
+                        </h3>
+                        <p class="text-slate-400 mb-4">
+                            An AI-powered smart teaching system for classrooms with multilingual TTS, auto-content explanation,
+                            quiz generation and analytics — built for smart boards and digital classrooms.
+                        </p>
+                        <div class="flex gap-2 text-xs font-mono flex-wrap">
+                            <span class="px-2 py-1 bg-white/10 rounded">Python</span>
+                            <span class="px-2 py-1 bg-white/10 rounded">Flask</span>
+                            <span class="px-2 py-1 bg-white/10 rounded">OpenAI</span>
+                            <span class="px-2 py-1 bg-white/10 rounded">TTS</span>
+                        </div>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1000&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-500 mix-blend-overlay rounded-2xl" alt="AI Smart Teaching Assistant">
+                </div>
+
+                <!-- Project 2: Tall Vertical -->
+                <div class="md:col-span-1 md:row-span-2 glass-card rounded-2xl p-6 tilt-card hover-trigger group relative overflow-hidden">
+                    <div class="h-full flex flex-col justify-end relative z-10">
+                        <h3 class="text-2xl font-bold mb-2 group-hover:text-neon-purple transition-colors">
+                            IoT College Bus Tracker
+                        </h3>
+                        <p class="text-slate-400 text-sm mb-4">
+                            Real-time college bus monitoring with GPS, student pass verification, safety alerts and live dashboards.
+                        </p>
+                        <div class="flex gap-2 text-xs font-mono flex-wrap">
+                            <span class="px-2 py-1 bg-white/10 rounded">ESP32</span>
+                            <span class="px-2 py-1 bg-white/10 rounded">GPS</span>
+                            <span class="px-2 py-1 bg-white/10 rounded">ThingSpeak</span>
+                        </div>
+                    </div>
+                    <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-110 transition-transform duration-700 rounded-2xl" alt="IoT Bus Tracker">
+                </div>
+
+                <!-- Project 3 -->
+                <div class="md:col-span-1 md:row-span-1 glass-card rounded-2xl p-6 tilt-card hover-trigger group relative">
+                    <div class="h-full flex flex-col justify-end relative z-10">
+                        <h3 class="text-xl font-bold mb-1">Plant Growth Vision AI</h3>
+                        <p class="text-slate-400 text-xs mb-2">
+                            Detects plant growth stages in real-time using a camera and custom-trained model.
+                        </p>
+                        <div class="flex gap-2 text-[10px] font-mono flex-wrap">
+                            <span class="px-2 py-1 bg-white/10 rounded">Python</span>
+                            <span class="px-2 py-1 bg-white/10 rounded">OpenCV</span>
+                            <span class="px-2 py-1 bg-white/10 rounded">ML</span>
+                        </div>
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-br from-blue-900/50 to-purple-900/50 rounded-2xl"></div>
+                </div>
+
+                <!-- Project 4 -->
+                <div class="md:col-span-2 md:row-span-1 glass-card rounded-2xl p-6 tilt-card hover-trigger group relative flex items-center justify-between">
+                    <div class="relative z-10 max-w-md">
+                        <h3 class="text-2xl font-bold mb-2">IdeaForge AI — Project Ideation SaaS</h3>
+                        <p class="text-slate-400 text-sm">
+                            A SaaS concept that generates unique innovation ideas, tech stacks and roadmaps with usage-based limits and Pro upgrade.
+                        </p>
+                        <div class="flex gap-2 text-[10px] font-mono flex-wrap mt-3">
+                            <span class="px-2 py-1 bg-white/10 rounded">Next.js</span>
+                            <span class="px-2 py-1 bg-white/10 rounded">Node</span>
+                            <span class="px-2 py-1 bg-white/10 rounded">MongoDB</span>
+                        </div>
+                    </div>
+                    <div class="relative z-10 text-4xl text-white/20 group-hover:text-neon-blue transition-colors">
+                        <i class="fas fa-arrow-right transform -rotate-45 group-hover:rotate-0 transition-transform duration-300"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="grid md:grid-cols-2 gap-12 items-center">
+            <div class="space-y-6 relative">
+                <h2 class="text-3xl md:text-4xl font-display font-bold">
+                    <span class="text-neon-blue">Human</span> Behind The Code
+                </h2>
+                <p class="text-slate-400 leading-relaxed">
+                    I’m <span class="font-semibold">Manikandan</span>, a Computer Science Engineering student passionate about
+                    building real-world solutions with <span class="text-neon-blue">AI</span>, <span class="text-neon-purple">full-stack development</span>,
+                    <span class="font-semibold">cloud</span> and <span class="font-semibold">IoT</span>. I love turning ideas into interactive
+                    products that feel futuristic, not just functional.
+                </p>
+                <p class="text-slate-400 leading-relaxed">
+                    From smart classroom assistants to bus tracking and plant analysis systems, I enjoy working on projects that
+                    blend hardware, software and intelligent interfaces. My focus is on clean architecture, smooth UX and
+                    explainable AI-driven features.
+                </p>
+                <div class="flex gap-4 pt-4">
+                    <div class="glass-card px-4 py-3 rounded-lg text-center min-w-[120px]">
+                        <div class="text-neon-purple font-bold text-lg">Tamil Nadu</div>
+                        <div class="text-[10px] text-slate-500 uppercase">Based In</div>
+                    </div>
+                    <div class="glass-card px-4 py-3 rounded-lg text-center min-w-[120px]">
+                        <div class="text-neon-blue font-bold text-lg">IST (+5:30)</div>
+                        <div class="text-[10px] text-slate-500 uppercase">Timezone</div>
+                    </div>
+                </div>
+            </div>
+            <div class="relative h-[400px] w-full glass-card rounded-2xl overflow-hidden hover-trigger">
+                <!-- Replace this with your own image / collage -->
+                <img src="https://images.unsplash.com/photo-1511447333015-45b65e60f6d5?q=80&w=1000&auto=format&fit=crop" class="absolute inset-0 w-full h-full object-cover opacity-70" data-speed="0.5">
+                <div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black to-transparent">
+                    <div class="font-mono text-xs text-neon-blue">
+                        System.init(<span class="text-white">"Manikandan M"</span>)
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact -->
+        <section id="contact" class="max-w-3xl mx-auto text-center space-y-8 pb-20">
+            <h2 class="text-4xl md:text-6xl font-display font-bold">
+                Let's Build the <span class="text-neon-purple">Future</span>
+            </h2>
+            <p class="text-slate-400">
+                Open to internships, collaborations, AI experiments and full-stack product builds.
+            </p>
+            
+            <!-- Replace email with your real one -->
+            <a href="mailto:manikandan@example.com" class="hover-trigger inline-block">
+                <div class="glass-card px-10 py-6 rounded-full border border-neon-blue/50 hover:bg-neon-blue/10 transition-all duration-300 group">
+                    <span class="text-2xl md:text-4xl font-bold group-hover:text-neon-blue transition-colors">
+                        mmani786ms@gmail.com
+                    </span>
+                </div>
+            </a>
+
+            <div class="flex justify-center gap-6 pt-8">
+                <a href="https://github.com/Manikandan2005ms" target="_blank" class="hover-trigger text-2xl text-slate-400 hover:text-white hover:-translate-y-1 transition-transform">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="#" target="_blank" class="hover-trigger text-2xl text-slate-400 hover:text-blue-400 hover:-translate-y-1 transition-transform">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                <a href="https://www.linkedin.com/in/mani2005m/" target="_blank" class="hover-trigger text-2xl text-slate-400 hover:text-blue-600 hover:-translate-y-1 transition-transform">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                <a href="#" target="_blank" class="hover-trigger text-2xl text-slate-400 hover:text-pink-500 hover:-translate-y-1 transition-transform">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="border-t border-white/5 bg-black/50 backdrop-blur-md py-8 text-center relative z-10">
+        <p class="text-slate-600 text-sm">
+            © 2025 Manikandan M <span class="text-neon-purple"></span>
+        </p>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        // --- 1. Custom Cursor Logic ---
+        const cursor = document.getElementById('cursor');
+        const cursorDot = document.getElementById('cursor-dot');
+        const hoverTriggers = document.querySelectorAll('.hover-trigger');
+
+        document.addEventListener('mousemove', (e) => {
+            // Dot follows immediately
+            cursorDot.style.left = e.clientX + 'px';
+            cursorDot.style.top = e.clientY + 'px';
+
+            // Ring follows with slight delay (CSS transition handles smoothness)
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        // Hover States
+        hoverTriggers.forEach(link => {
+            link.addEventListener('mouseenter', () => {
+                cursor.classList.add('hovered');
+            });
+            link.addEventListener('mouseleave', () => {
+                cursor.classList.remove('hovered');
+            });
+        });
+
+        // --- 2. Spotlight Effect (Gradient updates on mousemove) ---
+        const cards = document.querySelectorAll('.glass-card');
+
+        document.addEventListener('mousemove', (e) => {
+            cards.forEach(card => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // Update CSS variables for the spotlight gradient
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+
+        // --- 3. 3D Tilt Effect (Vanilla JS Implementation) ---
+        const tiltCards = document.querySelectorAll('.tilt-card');
+
+        tiltCards.forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = ((y - centerY) / centerY) * -10;
+                const rotateY = ((x - centerX) / centerX) * 10;
+
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+            });
+        });
+
+        // --- 4. GSAP Animations ---
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Hero Reveal
+        const tl = gsap.timeline();
+        tl.from("#navbar", { y: -100, opacity: 0, duration: 1, ease: "power4.out" })
+          .from(".reveal-text > *", { y: 50, opacity: 0, stagger: 0.1, duration: 1, ease: "power3.out" }, "-=0.5")
+          .from(".tilt-element", { x: 100, opacity: 0, duration: 1.2, ease: "power3.out" }, "-=1");
+
+        // Section Headers
+        gsap.utils.toArray('h2').forEach(header => {
+            gsap.from(header, {
+                opacity: 0,
+                y: 30,
+                scrollTrigger: {
+                    trigger: header,
+                    start: "top 85%",
+                    toggleActions: "play none none reverse"
+                }
+            });
+        });
+
+        // Bento Grid Stagger
+        gsap.from("#projects .glass-card", {
+            y: 50,
+            opacity: 0,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: "power2.out",
+            scrollTrigger: {
+                trigger: "#projects",
+                start: "top 75%"
+            }
+        });
+
+        // Skills Stagger
+        gsap.from("#skills .glass-card", {
+            scale: 0.8,
+            opacity: 0,
+            duration: 0.5,
+            stagger: 0.05,
+            ease: "back.out(1.7)",
+            scrollTrigger: {
+                trigger: "#skills",
+                start: "top 80%"
+            }
+        });
+
+        // --- 5. Particle Background (Canvas) ---
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let particles = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2;
+                this.alpha = Math.random() * 0.5;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                if (this.x < 0) this.x = width;
+                if (this.x > width) this.x = 0;
+                if (this.y < 0) this.y = height;
+                if (this.y > height) this.y = 0;
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 100; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', () => {
+            resize();
+            initParticles();
+        });
+
+        resize();
+        initParticles();
+        animateParticles();
+    </script>
+</body>
+</html>
